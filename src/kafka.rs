@@ -1,4 +1,3 @@
-use crate::queries;
 use rdkafka::config::{ClientConfig, RDKafkaLogLevel};
 use rdkafka::consumer::{CommitMode, Consumer, StreamConsumer};
 use rdkafka::message::Message;
@@ -46,7 +45,7 @@ enum Action {
     Delete,
 }
 
-pub fn create_kafka_producer_upstash(secrets: &SecretStore) -> FutureProducer {
+pub fn create_kafka_producer_upstash() -> FutureProducer {
     let url = env::var("KAFKA_URL").unwrap();
     let user = env::var("KAFKA_SASL_USER").unwrap();
     let pw = env::var("KAFKA_SASL_PASS").unwrap();
@@ -62,7 +61,7 @@ pub fn create_kafka_producer_upstash(secrets: &SecretStore) -> FutureProducer {
         .expect("Producer creation error")
 }
 
-pub fn create_kafka_consumer_upstash(secrets: &SecretStore) -> StreamConsumer {
+pub fn create_kafka_consumer_upstash() -> StreamConsumer {
     let url = env::var("KAFKA_URL").unwrap();
     let user = env::var("KAFKA_SASL_USER").unwrap();
     let pw = env::var("KAFKA_SASL_PASS").unwrap();
@@ -82,7 +81,7 @@ pub fn create_kafka_consumer_upstash(secrets: &SecretStore) -> StreamConsumer {
         .expect("Consumer creation failed")
 }
 
-pub fn create_kafka_producer(secrets: &SecretStore) -> FutureProducer {
+pub fn create_kafka_producer() -> FutureProducer {
     let url = env::var("KAFKA_URL").unwrap();
 
     let log_level: FutureProducer = ClientConfig::new()
@@ -96,7 +95,7 @@ pub fn create_kafka_producer(secrets: &SecretStore) -> FutureProducer {
     log_level
 }
 
-pub fn create_kafka_consumer(secrets: &SecretStore) -> StreamConsumer {
+pub fn create_kafka_consumer() -> StreamConsumer {
     let url = env::var("KAFKA_URL").unwrap();
 
     ClientConfig::new()
@@ -113,7 +112,7 @@ pub fn create_kafka_consumer(secrets: &SecretStore) -> StreamConsumer {
 }
 
 #[tracing::instrument(skip(con))]
-pub async fn kafka_consumer_task(con: StreamConsumer, db: sqlx::PgPool) {
+pub async fn kafka_consumer_task(con: StreamConsumer) {
     con.subscribe(&["messages"])
         .expect("Failed to subscribe to topics");
 
@@ -138,9 +137,15 @@ pub async fn kafka_consumer_task(con: StreamConsumer, db: sqlx::PgPool) {
 
                 tracing::info!("Got payload: {message:?}");
                 match message.action {
-                    Action::Create => queries::create_message(message, &db).await,
-                    Action::Update => queries::update_message(message, &db).await,
-                    Action::Delete => queries::delete_message(message, &db).await,
+                    Action::Create => {
+                        println!("message created : {}", message.data.unwrap().message)
+                    }
+                    Action::Update => {
+                        println!("message created : {}", message.data.unwrap().message)
+                    }
+                    Action::Delete => {
+                        println!("message created : {}", message.data.unwrap().message)
+                    }
                 }
 
                 let _ = con
