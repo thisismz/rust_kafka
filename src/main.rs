@@ -2,11 +2,12 @@ mod error;
 mod kafka;
 mod router;
 mod state;
+use dotenv::dotenv;
 use router::init_router;
 use state::AppState;
-
 #[tokio::main]
 async fn main() {
+    dotenv().ok();
     let con = kafka::create_kafka_consumer();
     tokio::spawn(async move {
         kafka::kafka_consumer_task(con).await;
